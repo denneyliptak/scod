@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Hewlett Packard Enterprise" /><link rel="canonical" href="https://scod.hpedev.io/csi_driver/operations.html" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <meta property="og:title" content="HPE Storage Container Orchestrator Documentation"/>
+    <meta property="og:description" content="This is an umbrella documentation project for all container integrations surrounding HPE primary storage. Tailored for IT ops, developers and partners. Including HPE Alletra, Nimble Storage and Primera."/>
+    <meta property="og:locale" content="en_US"/>
+    <meta property="og:url" content="https://scod.hpedev.io"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:image" content="https://scod.hpedev.io/img/hpe-social-og-image01.jpg"/>
+    <meta property="og:image:width" content="1200"/>
+    <meta property="og:image:height" content="630"/>
+    
+    <title>Auxiliary Operations - SCOD.HPEDEV.IO</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+        <link href="../css/hpedev.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Auxiliary Operations";
+        var mkdocs_page_input_path = "csi_driver/operations.md";
+        var mkdocs_page_url = "/csi_driver/operations.html";
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-PC28RTKKTW"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-PC28RTKKTW');
+      </script>
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> SCOD.HPEDEV.IO
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">WELCOME</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../welcome/index.html">Get started!</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">HPE CSI DRIVER FOR KUBERNETES</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="index.html">Overview</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="using.html">Using</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="metrics.html">Metrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="monitor.html">Pod Monitor</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="operations.html">Auxiliary Operations</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#migrate_encrypted_volumes">Migrate Encrypted Volumes</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#assumptions">Assumptions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#prepare_the_workload_and_persistent_volume_claims">Prepare the Workload and Persistent Volume Claims</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#create_a_new_persistent_volume_claim_and_update_retain_policies">Create a new Persistent Volume Claim and Update Retain Policies</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#copy_persistent_volume_claim_and_reset">Copy Persistent Volume Claim and Reset</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#pvcs_with_volumemode_filesystem">PVCs with volumeMode: Filesystem</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pvcs_with_volumemode_block">PVCs with volumeMode: Block</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#restart_the_workload">Restart the Workload</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#optional_workflow_with_filesystem_persistent_volume_claims">Optional Workflow with Filesystem Persistent Volume Claims</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#upgrade_nfs_servers">Upgrade NFS Servers</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#upgrade_to_v220">Upgrade to v2.2.0</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#assumptions_1">Assumptions</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#patch_running_nfs_servers">Patch Running NFS Servers</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#validation">Validation</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="diagnostics.html">Diagnostics</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">CONTAINER STORAGE PROVIDERS</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../container_storage_provider/hpe_alletra_6000/index.html">HPE Alletra 6000 and Nimble</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../container_storage_provider/hpe_alletra_9000/index.html">HPE Alletra 9000 and Primera/3PAR</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">HPE EZMERAL RUNTIME ENTERPRISE</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ezmeral/install.html">Install HPE CSI Driver</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">PARTNER ECOSYSTEMS</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../partners/commvault/index.html">Commvault</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../partners/kasten/index.html">Kasten by Veeam</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../partners/mirantis/index.html">Mirantis</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../partners/redhat_openshift/index.html">Red Hat OpenShift</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../partners/suse_rancher/index.html">SUSE Rancher</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../partners/tkgi/index.html">Tanzu Kubernetes Grid Integrated</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../partners/vmware/index.html">VMware</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">LEARN</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../learn/containers101/index.html">Cloud-Native, Containers & DevOps</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../learn/persistent_storage/index.html">Persistent Storage for Kubernetes</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../learn/introduction_to_containers/index.html">For HPE partners:<br />&nbsp;&nbsp; Introduction to Containers</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../learn/csi_primitives/index.html">Introduction to CSI Primitives</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../learn/video_gallery/index.html">Video Gallery</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../learn/csi_workshop/index.html">Interactive CSI Workshop</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">COMMUNITY</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="" href="https://developer.hpe.com">HPE Developer Community</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://slack.hpedev.io">Sign up to HPE DEV on Slack</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://github.com/hpe-storage/scod/issues/new?title=I have some feedback on SCOD">Got feedback?</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">EXTERNAL LINKS</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="" href="https://github.com/hpe-storage/scod">SCOD on GitHub</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://github.com/hpe-storage">HPE Storage on GitHub</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://hpe.com/storage/containers">Storage for Containers on hpe.com</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">LEGAL</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../legal/contributing/index.html">Contributing</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../legal/support/index.html">Support</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../legal/license/index.html">License</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../legal/notices/index.html">Notices</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">LEGACY DRIVERS AND PLUGINS</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../legacy/index.html">Docker, FlexVolume and CSPs</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">SCOD.HPEDEV.IO</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>HPE CSI DRIVER FOR KUBERNETES &raquo;</li>
+      <li>Auxiliary Operations</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h1>
+<p>The documentation in this section illustrates officially HPE supported procedures to perform maintenance tasks on the CSI driver outside the scope of deploying and uninstalling the driver.</p>
+<div class="toc">
+<ul>
+<li><a href="#overview">Overview</a><ul>
+<li><a href="#migrate_encrypted_volumes">Migrate Encrypted Volumes</a><ul>
+<li><a href="#assumptions">Assumptions</a></li>
+<li><a href="#prepare_the_workload_and_persistent_volume_claims">Prepare the Workload and Persistent Volume Claims</a><ul>
+<li><a href="#create_a_new_persistent_volume_claim_and_update_retain_policies">Create a new Persistent Volume Claim and Update Retain Policies</a><ul>
+<li><a href="#important_validation_steps">Important Validation Steps</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#copy_persistent_volume_claim_and_reset">Copy Persistent Volume Claim and Reset</a><ul>
+<li><a href="#pvcs_with_volumemode_filesystem">PVCs with volumeMode: Filesystem</a></li>
+<li><a href="#pvcs_with_volumemode_block">PVCs with volumeMode: Block</a></li>
+</ul>
+</li>
+<li><a href="#restart_the_workload">Restart the Workload</a></li>
+<li><a href="#optional_workflow_with_filesystem_persistent_volume_claims">Optional Workflow with Filesystem Persistent Volume Claims</a></li>
+</ul>
+</li>
+<li><a href="#upgrade_nfs_servers">Upgrade NFS Servers</a><ul>
+<li><a href="#upgrade_to_v220">Upgrade to v2.2.0</a><ul>
+<li><a href="#assumptions_1">Assumptions</a></li>
+<li><a href="#patch_running_nfs_servers">Patch Running NFS Servers</a></li>
+</ul>
+</li>
+<li><a href="#validation">Validation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="migrate_encrypted_volumes">Migrate Encrypted Volumes<a class="headerlink" href="#migrate_encrypted_volumes" title="Permanent link">&para;</a></h2>
+<p>Persistent volumes created with v2.1.1 or below using <a href="using.html#using_volume_encryption">volume encryption</a>, the CSI driver use LUKS2 (WikiPedia: <a href="https://en.wikipedia.org/wiki/Linux_Unified_Key_Setup">Linux Unified Key Setup</a>) and can't expand the <code>PersistentVolumeClaim</code>. With v2.2.0 and above, LUKS1 is used and the CSI driver is capable of expanding the <code>PVC</code>. </p>
+<p>This procedure migrate (copy) data from LUKS2 to LUKS1 PVCs to allow expansion of the volume. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It's not a limitation of LUKS2 to not allow expansion but rather how the CSI driver interact with the host.</p>
+</div>
+<h3 id="assumptions">Assumptions<a class="headerlink" href="#assumptions" title="Permanent link">&para;</a></h3>
+<p>These are the assumptions made throughout this procedure.</p>
+<ul>
+<li>Data to be migrated has a good backup to restore to, not just a snapshot.</li>
+<li>HPE CSI Driver for Kubernetes v2.2.0 or later installed.</li>
+<li>Worker nodes with access to the Quay registry and SCOD.</li>
+<li>Access to the commands <code>kubectl</code>, <code>curl</code>, <code>jq</code> and <code>yq</code>.</li>
+<li>Cluster privileges to manipulate <code>PersistentVolumes</code>.</li>
+<li>None of the commands executed should return errors or have non-zero exit codes.</li>
+<li>Only <code>ReadWriteOnce</code> <code>PVCs</code> are covered.</li>
+<li>No custom <code>PVC</code> annotations.</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>There are many different ways to copy <code>PVCs</code>. These steps outlines and uses one particular method developed and tested by HPE and similar workflows may be applied with other tools and procedures.</p>
+</div>
+<h3 id="prepare_the_workload_and_persistent_volume_claims">Prepare the Workload and Persistent Volume Claims<a class="headerlink" href="#prepare_the_workload_and_persistent_volume_claims" title="Permanent link">&para;</a></h3>
+<p>First, identify the <code>PersistentVolume</code> to migrate from and set shell variables.</p>
+<p> <pre><code class=text>export OLD_SRC_PVC=&lt;insert your existing PVC name here&gt;
+export OLD_SRC_PV=$(kubectl get pvc -o json | \
+       jq -r &quot;.items[] | \
+        select(.metadata.name | \
+        test(\&quot;${OLD_SRC_PVC}\&quot;))&quot;.spec.volumeName)
+</code></pre></p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Ensure these shell variables are set at all times.</p>
+</div>
+<p>In order to copy data out of a <code>PVC</code>, the running workload needs to be disassociated with the <code>PVC</code>. It's not possible to scale the replicas to zero, the exception being <code>ReadWriteMany</code> <code>PVCs</code> which could lead to data inconsistency problems. These procedures assumes application consistency by having the workload shut down.</p>
+<p>It's out of scope for this procedure to demonstrate how to shut down a particular workload. Ensure there are no <code>volumeattachments</code> associated with the <code>PersistentVolume</code>.</p>
+<p> <pre><code class=text>kubectl get volumeattachment -o json | \
+ jq -r &quot;.items[] | \
+  select(.spec.source.persistentVolumeName | \
+  test(\&quot;${OLD_SRC_PV}\&quot;))&quot;.spec.source
+</code></pre></p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>For large <code>volumeMode: Filesystem</code> <code>PVCs</code> where copying data may take days, it's recommended to use the <a href="#optional_workflow_with_filesystem_persistent_volume_claims">Optional Workflow with Filesystem Persistent Volume Claims</a> that utilizes the <code>PVC</code> <code>dataSource</code> capability.</p>
+</div>
+<h4 id="create_a_new_persistent_volume_claim_and_update_retain_policies">Create a new Persistent Volume Claim and Update Retain Policies<a class="headerlink" href="#create_a_new_persistent_volume_claim_and_update_retain_policies" title="Permanent link">&para;</a></h4>
+<p>Create a new <code>PVC</code> named "new-pvc" with enough space to host the data from the old source <code>PVC</code>.</p>
+<p> <pre><code class=text>apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: new-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 32Gi
+  volumeMode: Filesystem
+</code></pre></p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>If the source <code>PVC</code> is a raw block volume, ensure <code>volumeMode: Block</code> is set on the new <code>PVC</code>.</p>
+</div>
+<p>Edit and set the shell variables for the newly created <code>PVC</code>.</p>
+<p> <pre><code class=text>export NEW_DST_PVC_SIZE=32Gi
+export NEW_DST_PVC_VOLMODE=Filesystem
+export NEW_DST_PVC=new-pvc
+export NEW_DST_PV=$(kubectl get pvc -o json | \
+       jq -r &quot;.items[] | \
+       select(.metadata.name | \
+       test(\&quot;${NEW_DST_PVC}\&quot;))&quot;.spec.volumeName)
+</code></pre></p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>The <code>PVC</code> name "new-pvc" is a placeholder name. When the procedure is done, the <code>PVC</code> will have its original name restored.</p>
+</div>
+<h5 id="important_validation_steps">Important Validation Steps<a class="headerlink" href="#important_validation_steps" title="Permanent link">&para;</a></h5>
+<p>At this point, there should be six shell variables declared. Example:</p>
+<p> <pre><code class=text>$ env | grep _PV
+NEW_DST_PVC_SIZE=32Gi
+NEW_DST_PVC=new-pvc
+OLD_SRC_PVC=old-pvc &lt;-- This should be the original name of the PVC
+NEW_DST_PVC_VOLMODE=Filesystem
+NEW_DST_PV=pvc-ad7a05a9-c410-4c63-b997-51fb9fc473bf
+OLD_SRC_PV=pvc-ca7c2f64-641d-4265-90f8-4aed888bd2c5
+</code></pre></p>
+<p>Regardless of the <code>retainPolicy</code> set in the <code>StorageClass</code>, ensure the <code>persistentVolumeReclaimPolicy</code> is set to "Retain" for both <code>PVs</code>.</p>
+<p> <pre><code class=text>kubectl patch pv/${OLD_SRC_PV} pv/${NEW_DST_PV} \
+ -p '{&quot;spec&quot;:{&quot;persistentVolumeReclaimPolicy&quot;:&quot;Retain&quot;}}'
+</code></pre></p>
+<div class="admonition caution">
+<p class="admonition-title">Data Loss Warning</p>
+<p>It's <strong>EXTREMELY</strong> important no errors are returned from the above command. It <strong>WILL</strong> lead to data loss.</p>
+</div>
+<p>Validate the "persistentVolumeReclaimPolicy".</p>
+<p> <pre><code class=text>kubectl get pv/${OLD_SRC_PV} pv/${NEW_DST_PV} -o json | \
+ jq -r &quot;.items[] | \
+  select(.metadata.name)&quot;.spec.persistentVolumeReclaimPolicy
+</code></pre></p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The above command should output nothing but two lines with the word "Retain" on it.</p>
+</div>
+<h3 id="copy_persistent_volume_claim_and_reset">Copy Persistent Volume Claim and Reset<a class="headerlink" href="#copy_persistent_volume_claim_and_reset" title="Permanent link">&para;</a></h3>
+<p>In this phase, the data will be copied from the original <code>PVC</code> to the new <code>PVC</code> with a <code>Job</code> submitted to the cluster. Different tools are being used to perform the copy operation, ensure to pick the correct <code>volumeMode</code>.</p>
+<h4 id="pvcs_with_volumemode_filesystem">PVCs with volumeMode: Filesystem<a class="headerlink" href="#pvcs_with_volumemode_filesystem" title="Permanent link">&para;</a></h4>
+<p> <pre><code class=text>curl -s https://scod.hpedev.io/csi_driver/examples/operations/pvc-copy-file.yaml | \
+  yq &quot;( select(.spec.template.spec.volumes[] | \
+    select(.name == \&quot;src-pv\&quot;) | \
+    .persistentVolumeClaim.claimName = \&quot;${OLD_SRC_PVC}\&quot;)
+    &quot; | kubectl apply -f-
+</code></pre></p>
+<p>Wait for the <code>Job</code> to complete.</p>
+<p> <pre><code class=text>kubectl get job.batch/pvc-copy-file -w
+</code></pre></p>
+<p>Once the <code>Job</code> has completed, validate exit status and log files.</p>
+<p> <pre><code class=text>kubectl get job.batch/pvc-copy-file -o jsonpath='{.status.succeeded}'
+kubectl logs job.batch/pvc-copy-file
+</code></pre></p>
+<p>Delete the <code>Job</code> from the cluster.</p>
+<p> <pre><code class=text>kubectl delete job.batch/pvc-copy-file
+</code></pre></p>
+<p>Proceed to <a href="#restart_the_workload">restart the workload</a>.</p>
+<h4 id="pvcs_with_volumemode_block">PVCs with volumeMode: Block<a class="headerlink" href="#pvcs_with_volumemode_block" title="Permanent link">&para;</a></h4>
+<p> <pre><code class=text>curl -s https://scod.hpedev.io/csi_driver/examples/operations/pvc-copy-block.yaml | \
+  yq &quot;( select(.spec.template.spec.volumes[] | \
+    select(.name == \&quot;src-pv\&quot;) | \
+    .persistentVolumeClaim.claimName = \&quot;${OLD_SRC_PVC}\&quot;)
+    &quot; | kubectl apply -f-
+</code></pre></p>
+<p>Wait for the <code>Job</code> to complete.</p>
+<p> <pre><code class=text>kubectl get job.batch/pvc-copy-block -w
+</code></pre></p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>Data is copied block for block, verbatim, regardless of how much application data is stored in the block devices.</p>
+</div>
+<p>Once the <code>Job</code> has completed, validate exit status and log files.</p>
+<p> <pre><code class=text>kubectl get job.batch/pvc-copy-block -o jsonpath='{.status.succeeded}'
+kubectl logs job.batch/pvc-copy-block
+</code></pre></p>
+<p>Delete the <code>Job</code> from the cluster.</p>
+<p> <pre><code class=text>kubectl delete job.batch/pvc-copy-block
+</code></pre></p>
+<p>Proceed to <a href="#restart_the_workload">restart the workload</a>.</p>
+<h3 id="restart_the_workload">Restart the Workload<a class="headerlink" href="#restart_the_workload" title="Permanent link">&para;</a></h3>
+<p>This step requires both the old source <code>PVC</code> and the new destination <code>PVC</code> to be deleted. Once again, ensure the correct <code>persistentVolumeReclaimPolicy</code> is set on the <code>PVs</code>.</p>
+<p> <pre><code class=text>kubectl get pv/${OLD_SRC_PV} pv/${NEW_DST_PV} -o json | \
+ jq -r &quot;.items[] | \
+  select(.metadata.name)&quot;.spec.persistentVolumeReclaimPolicy
+</code></pre></p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The above command should output nothing but two lines with the word "Retain" on it, if not revisit <a href="#important_validation_steps">Important Validation Steps</a> to apply the policy and ensure environment variables are set correctly.</p>
+</div>
+<p>Delete the <code>PVCs</code>.</p>
+<p> <pre><code class=text>kubectl delete pvc/${OLD_SRC_PVC} pvc/${NEW_DST_PVC}
+</code></pre></p>
+<p>Next, allow the new <code>PV</code> to be reclaimed.</p>
+<p> <pre><code class=text>kubectl patch pv ${NEW_DST_PV} -p '{&quot;spec&quot;:{&quot;claimRef&quot;: null }}'
+</code></pre></p>
+<p>Next, create a <code>PVC</code> with the old source name and ensure it matches the size of the new destination <code>PVC</code>. </p>
+<p> <pre><code class=text>curl -s https://scod.hpedev.io/csi_driver/examples/operations/pvc-copy.yaml | \
+  yq &quot;.spec.volumeName = \&quot;${NEW_DST_PV}\&quot; | \
+    .metadata.name = \&quot;${OLD_SRC_PVC}\&quot; | \
+    .spec.volumeMode = \&quot;${NEW_DST_PVC_VOLMODE}\&quot; | \
+    .spec.resources.requests.storage = \&quot;${NEW_DST_PVC_SIZE}\&quot; \
+    &quot; | kubectl apply -f-
+</code></pre></p>
+<p>Verify the new <code>PVC</code> is "Bound" to the correct <code>PV</code>.</p>
+<p> <pre><code class=text>kubectl get pvc/${OLD_SRC_PVC} -o json | \
+  jq -r &quot;. | \
+    select(.spec.volumeName == \&quot;${NEW_DST_PV}\&quot;).metadata.name&quot;
+</code></pre></p>
+<p>If the command is successful, it should output your original <code>PVC</code> name.</p>
+<p>At this point the original workload should be deployed, verified and resumed. </p>
+<p>Optionally, the old source <code>PV</code> may be removed.</p>
+<p> <pre><code class=text>kubectl delete pv/${OLD_SRC_PV}
+</code></pre></p>
+<h3 id="optional_workflow_with_filesystem_persistent_volume_claims">Optional Workflow with Filesystem Persistent Volume Claims<a class="headerlink" href="#optional_workflow_with_filesystem_persistent_volume_claims" title="Permanent link">&para;</a></h3>
+<p>If there's a lot of content (millions of files, terabytes of data) that needs to be transferred in a <code>volumeMode: Filesystem</code> <code>PVC</code> it's recommended to transfer content incrementally. This is achieved by substituting the "old-pvc" with a <code>dataSource</code> clone of the running workload and perform the copy from the clone onto the "new-pvc".</p>
+<p>After the first transfer completes, the copy job may be recreated as many times as needed with a fresh clone of "old-pvc" until the downtime window has shrunk to an acceptable duration. For the final transfer, the actual source <code>PVC</code> will be used instead of the clone.</p>
+<p>This is an example <code>PVC</code>.</p>
+<p> <pre><code class=text>apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: clone-of-pvc
+spec:
+  dataSource:
+    name: this-is-the-current-prod-pvc
+    kind: PersistentVolumeClaim
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 32Gi
+</code></pre></p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>The capacity of the <code>dataSource</code> clone must match the original <code>PVC</code>.</p>
+</div>
+<p>Enabling and setting up the CSI snapshotter and related <code>CRDs</code> is not necessary but it's recommended to be familiar with using <a href="using.html#using_csi_snapshots">CSI snapshots</a>.</p>
+<h2 id="upgrade_nfs_servers">Upgrade NFS Servers<a class="headerlink" href="#upgrade_nfs_servers" title="Permanent link">&para;</a></h2>
+<p>In the event the CSI driver contains updates to the NFS Server Provisioner, any running NFS server needs to be updated manually. </p>
+<h3 id="upgrade_to_v220">Upgrade to v2.2.0<a class="headerlink" href="#upgrade_to_v220" title="Permanent link">&para;</a></h3>
+<p>Any prior deployed NFS servers may be upgraded to v2.2.0.</p>
+<h4 id="assumptions_1">Assumptions<a class="headerlink" href="#assumptions_1" title="Permanent link">&para;</a></h4>
+<ul>
+<li>HPE CSI Driver or Operator v2.2.0 installed.</li>
+<li>All running NFS servers are running in the "hpe-nfs" <code>Namespace</code>.</li>
+<li>Worker nodes with access to the Quay registry and SCOD.</li>
+<li>Access to the commands <code>kubectl</code>, <code>yq</code> and <code>curl</code>.</li>
+<li>Cluster privileges to manipulate resources in the "hpe-nfs" <code>Namespace</code>.</li>
+<li>None of the commands executed should return errors or have non-zero exit codes.</li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">Seealso</p>
+<p>If NFS <code>Deployments</code> are scattered across <code>Namespaces</code>, use the <a href="#validation">Validation</a> steps to find where they reside.</p>
+</div>
+<h4 id="patch_running_nfs_servers">Patch Running NFS Servers<a class="headerlink" href="#patch_running_nfs_servers" title="Permanent link">&para;</a></h4>
+<p>When patching the NFS <code>Deployments</code>, the <code>Pods</code> will restart and cause a pause in I/O for the NFS clients with active mounts. The clients will recover gracefully once the NFS <code>Pod</code> is running again.</p>
+<p>Patch all NFS <code>Deployments</code> with the following.</p>
+<p> <pre><code class=text>curl -s https://scod.hpedev.io/csi_driver/examples/operations/patch-nfs-server-2.2.0.yaml | \
+  kubectl patch -n hpe-nfs \
+  $(kubectl get deploy -n hpe-nfs -o name) \
+  --patch-file=/dev/stdin
+</code></pre></p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If it's desired to patch one NFS <code>Deployment</code> at a time, replace the shell substituion with a <code>Deployment</code> name.</p>
+</div>
+<h3 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h3>
+<p>This command will list all "hpe-nfs" <code>Deployments</code> across the entire cluster. Each <code>Deployment</code> should be using v3.0.0 of the "nfs-provisioner" image after the uprade is complete.</p>
+<p> <pre><code class=text>kubectl get deploy -A -o yaml | \
+  yq -r '.items[] | [] + { &quot;Namespace&quot;: select(.spec.template.spec.containers[].name == &quot;hpe-nfs&quot;).metadata.namespace, &quot;Deployment&quot;: select(.spec.template.spec.containers[].name == &quot;hpe-nfs&quot;).metadata.name, &quot;Image&quot;: select(.spec.template.spec.containers[].name == &quot;hpe-nfs&quot;).spec.template.spec.containers[].image }'
+</code></pre></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The above line is very long.</p>
+</div>
+              
+            </div>
+          </div>
+
+<footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="diagnostics.html" class="btn btn-neutral float-right" title="Diagnostics">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="monitor.html" class="btn btn-neutral" title="Pod Monitor"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+    <p>Copyright 2022 Hewlett Packard Enterprise Development LP<br />Give <a href="https://github.com/hpe-storage/scod/issues/new?title=csi_driver/operations.html">feedback</a> on this page.</p>
+    
+  </div>
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="monitor.html" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="diagnostics.html" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
